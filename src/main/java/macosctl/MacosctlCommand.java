@@ -1,65 +1,61 @@
 package macosctl;
 
-import io.micronaut.configuration.picocli.PicocliRunner;
+import io.micronaut.configuration.picocli.MicronautFactory;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
 import io.micronaut.logging.LogLevel;
 import io.micronaut.logging.LoggingSystem;
-import io.vavr.collection.List;
 import jakarta.inject.Inject;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-import java.util.Arrays;
-
 @Slf4j
-@Command(name = "macosctl", description = "Switch between a primary and a secondary network service when configured users are logged in or are not the only ones logged in.",
-        mixinStandardHelpOptions = true)
-public class MacosctlCommand implements Runnable {
+@Command(
+        name = "macosctl",
+        description = "Perform MacOS operations",
+        mixinStandardHelpOptions = true,
+        usageHelpAutoWidth = true,
+        subcommands = {NetworkServiceCommand.class},
+        scope = CommandLine.ScopeType.INHERIT
+)
+public class MacosctlCommand {
 
     public static final String APPLICATION_LOGGER = "macosctl";
-
-    @Option(names = {"-p", "--primary-service"}, description = "The primary service")
-    String primaryNetworkService;
-
-    @Option(names = {"-s", "--secondary-service"}, description = "The secondary service")
-    String secondaryNetworkService;
-
-    @Option(names = {"-u", "--users"}, description = "The list of users to match for switching", required = true)
-    String[] users = new String[]{};
-
-    @Option(names = {"-e", "--exclusive-user-match"}, description = "When set to 'true' switch to the secondary service if the configured users are not the only ones logged in")
-    boolean exclusiveUserMatch = true;
-
-    @Option(names = {"-d", "--dry-run"}, description = "When set to 'true' no actual switching happens")
-    boolean dryRun = false;
 
     @Option(names = {"-V", "--verbose"}, description = "When set to 'true' debug logs are printed to the output")
     boolean verbose = false;
 
+    @CommandLine.Mixin
+    @SuppressWarnings("InstantiationOfUtilityClass")
+    SharedOptions sharedOptions = new SharedOptions();
     @Inject
     LoggingSystem loggingSystem;
 
     public static void main(String[] args) {
-        PicocliRunner.run(MacosctlCommand.class, args);
+        int exitCode;
+        try (final ApplicationContext ctx = ApplicationContext.builder(Environment.CLI).start()) {
+            exitCode = execute(args, ctx);
+        }
+        System.exit(exitCode);
     }
 
-    @Override
-    @SneakyThrows
-    public void run() {
+    public static int execute(String[] args, ApplicationContext ctx) {
+        int exitCode;
+        final MacosctlCommand app = ctx.getBean(MacosctlCommand.class);
+        exitCode = new CommandLine(app, new MicronautFactory(ctx))
+                .setCaseInsensitiveEnumValuesAllowed(true)
+                .setAbbreviatedOptionsAllowed(true)
+                .setExecutionStrategy(app::executionStrategy)
+                .execute(args);
+        return exitCode;
+    }
+
+    private int executionStrategy(CommandLine.ParseResult parseResult) {
         if (verbose) {
             loggingSystem.setLogLevel(APPLICATION_LOGGER, LogLevel.DEBUG);
         }
-
-        final NetworkServiceOrderConfig config = NetworkServiceOrderConfig.builder()
-                                                                          .druRun(dryRun)
-                                                                          .exclusiveUserMatch(exclusiveUserMatch)
-                                                                          .users(List.ofAll(Arrays.stream(users)))
-                                                                          .primaryService(primaryNetworkService)
-                                                                          .secondaryService(secondaryNetworkService)
-                                                                          .build();
-        final NetworkServiceOrderService service = new NetworkServiceOrderService(config, new MacosCliNetworkSetup(), new BsdWho());
-
-        service.run();
+        return new CommandLine.RunLast().execute(parseResult); // default execution strategy
     }
 }

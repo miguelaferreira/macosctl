@@ -1,6 +1,5 @@
 package macosctl;
 
-import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import org.junit.jupiter.api.Test;
@@ -19,9 +18,9 @@ public class MacosctlCommandTest {
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
             String[] args = new String[]{};
-            PicocliRunner.run(MacosctlCommand.class, ctx, args);
+            MacosctlCommand.execute(args, ctx);
 
-            assertThat(err.toString()).contains("Missing required option");
+            assertThat(err.toString()).contains("Missing required subcommand");
         }
     }
 }
