@@ -14,17 +14,17 @@ import picocli.CommandLine.Option;
 @Slf4j
 @Command(
         name = "macosctl",
-        description = "Perform MacOS operations",
+        description = "Perform MacOS operations.",
         mixinStandardHelpOptions = true,
         usageHelpAutoWidth = true,
-        subcommands = {NetworkServiceCommand.class},
+        subcommands = {NetworkServiceCommand.class, LittleSnitchCommand.class},
         scope = CommandLine.ScopeType.INHERIT
 )
 public class MacosctlCommand {
 
     public static final String APPLICATION_LOGGER = "macosctl";
 
-    @Option(names = {"-V", "--verbose"}, description = "When set to 'true' debug logs are printed to the output")
+    @Option(names = {"-v", "--verbose"}, description = "When set to 'true' debug logs are printed to the output")
     boolean verbose = false;
 
     @CommandLine.Mixin

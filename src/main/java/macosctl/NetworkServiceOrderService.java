@@ -33,9 +33,7 @@ public class NetworkServiceOrderService {
     public Option<String> run() throws IOException {
         log.info("Primary network service: '{}'", primaryServiceName);
         log.info("Secondary network service: '{}'", secondaryServiceName);
-        log.info("Checking if any configured user is logged in? '{}'", !exclusiveUserMatch);
-        log.info("Checking if only configured users are logged in? {}", exclusiveUserMatch);
-        log.info("Configured users: '{}'", configuredUsers.mkString(", "));
+        LoggingUtils.logUserMatch(log, exclusiveUserMatch, configuredUsers);
 
         final List<String> loggedInUsers = bsdWhoCli.who().map(BsdWho.User::name).toList();
         log.info("Logged in users: '{}'", loggedInUsers.mkString(", "));
@@ -45,7 +43,7 @@ public class NetworkServiceOrderService {
 
         Option<String> result = Option.none();
         if (!networkServices.isEmpty()) {
-            final boolean shouldSwitchToSecondary = shouldSwitchToSecondaryService(exclusiveUserMatch, loggedInUsers, configuredUsers);
+            final boolean shouldSwitchToSecondary = LoggedInUserConditionUtils.conditionMet(exclusiveUserMatch, loggedInUsers, configuredUsers);
             if (shouldSwitchToSecondary && serviceIsNotTheFirst(secondaryServiceName, networkServices)) {
                 switchServiceOrder(secondaryServiceName, networkSetupCli, networkServices, dryRun);
                 result = Option.of(secondaryServiceName);
@@ -98,26 +96,5 @@ public class NetworkServiceOrderService {
 
     private static Predicate<NetworkService> byName(String name) {
         return networkService -> networkService.name().equals(name);
-    }
-
-    protected static boolean shouldSwitchToSecondaryService(boolean exclusiveUserMatch, List<String> loggedInUsers, List<String> configuredUsers) {
-        final boolean shouldSwitch;
-        if (exclusiveUserMatch) {
-            shouldSwitch = !areOnlyConfiguredUsersLoggedIn(loggedInUsers, configuredUsers);
-        } else {
-            shouldSwitch = areAnyConfiguredUsersLoggedIn(loggedInUsers, configuredUsers);
-        }
-        log.debug("[exclusive user match = {}] should switch to secondary service? '{}'", exclusiveUserMatch, shouldSwitch);
-        return shouldSwitch;
-    }
-
-    protected static boolean areOnlyConfiguredUsersLoggedIn(List<String> loggedInUsers, List<String> configuredUsers) {
-        return loggedInUsers.removeAll(configuredUsers).isEmpty();
-    }
-
-    protected static boolean areAnyConfiguredUsersLoggedIn(List<String> loggedInUsers, List<String> configuredUsers) {
-        return loggedInUsers.filter(configuredUsers::contains)
-                            .headOption()
-                            .isDefined();
     }
 }

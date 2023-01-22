@@ -16,17 +16,11 @@ import java.util.Arrays;
         mixinStandardHelpOptions = true
 )
 public class NetworkServiceOrderSwitchCommand implements Runnable {
-    @Option(names = {"-p", "--primary-service"}, description = "The primary service")
+    @Option(names = {"-p", "--primary-service"}, description = "The primary service", required = true)
     String primaryNetworkService;
 
-    @Option(names = {"-s", "--secondary-service"}, description = "The secondary service")
+    @Option(names = {"-s", "--secondary-service"}, description = "The secondary service", required = true)
     String secondaryNetworkService;
-
-    @Option(names = {"-u", "--users"}, description = "The list of users to match for switching", required = true)
-    String[] users = new String[]{};
-
-    @Option(names = {"-e", "--exclusive-user-match"}, description = "When set to 'true' switch to the secondary service if the configured users are not the only ones logged in")
-    boolean exclusiveUserMatch = true;
 
     @CommandLine.Mixin
     @SuppressWarnings("InstantiationOfUtilityClass")
@@ -35,10 +29,11 @@ public class NetworkServiceOrderSwitchCommand implements Runnable {
     @Override
     @SneakyThrows
     public void run() {
+        log.info("Running network service order switch");
         final NetworkServiceOrderConfig config = NetworkServiceOrderConfig.builder()
                                                                           .druRun(SharedOptions.dryRun)
-                                                                          .exclusiveUserMatch(exclusiveUserMatch)
-                                                                          .users(List.ofAll(Arrays.stream(users)))
+                                                                          .exclusiveUserMatch(SharedOptions.exclusiveUserMatch)
+                                                                          .users(List.ofAll(Arrays.stream(SharedOptions.users)))
                                                                           .primaryService(primaryNetworkService)
                                                                           .secondaryService(secondaryNetworkService)
                                                                           .build();
