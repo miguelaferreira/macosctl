@@ -58,7 +58,11 @@ public class ProcessAdapter {
     public Option<ProcessExecution> waitForExecution() {
         validateProcessHasStarted();
 
+        log.debug("Waiting for process to terminate");
+
         process.waitFor(MAX_WAIT_SECONDS, TimeUnit.SECONDS);
+
+        log.debug("Waiting done");
         return processExecution();
     }
 
@@ -68,6 +72,7 @@ public class ProcessAdapter {
         log.debug("Reading process output");
         final InputStream inputStream = process.getInputStream();
         final BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        log.trace("Calling 'reader.lines()'");
         return Stream.ofAll(reader.lines());
     }
 
