@@ -1,0 +1,6 @@
+applicationType: cli
+defaultPackage: macosctl
+testFramework: junit
+sourceLanguage: java
+buildTool: gradle
+features: [annotation-api, app-name, graalvm, gradle, jackson-databind, java, junit, logback, lombok, micronaut-build, picocli, picocli-java-application, picocli-junit, reactor, readme, shade, yaml]

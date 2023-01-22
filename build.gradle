@@ -1,0 +1,48 @@
+plugins {
+    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("io.micronaut.application") version "3.7.0"
+}
+
+version = "0.1"
+group = "macosctl"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    annotationProcessor("org.projectlombok:lombok")
+    annotationProcessor("info.picocli:picocli-codegen")
+    implementation("info.picocli:picocli")
+    implementation("io.micronaut:micronaut-jackson-databind")
+    implementation("io.micronaut.picocli:micronaut-picocli")
+    implementation("jakarta.annotation:jakarta.annotation-api")
+    compileOnly("org.projectlombok:lombok")
+    runtimeOnly("ch.qos.logback:logback-classic")
+    compileOnly("org.graalvm.nativeimage:svm")
+
+    implementation("io.micronaut:micronaut-validation")
+    implementation 'io.vavr:vavr:0.10.4'
+
+    testImplementation("io.micronaut:micronaut-http-client")
+    testImplementation 'org.assertj:assertj-parent-pom:2.2.18'
+    testImplementation 'org.assertj:assertj-vavr:0.4.2'
+    testImplementation 'org.mockito:junit-jupiter:2.20.0'
+}
+
+
+application {
+    mainClass.set("macosctl.MacosctlCommand")
+}
+java {
+    sourceCompatibility = JavaVersion.toVersion("17")
+    targetCompatibility = JavaVersion.toVersion("17")
+}
+
+micronaut {
+    testRuntime("junit5")
+    processing {
+        incremental(true)
+        annotations("macosctl.*")
+    }
+}
